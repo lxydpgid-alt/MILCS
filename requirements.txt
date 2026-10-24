@@ -1,7 +1,5 @@
 numpy==1.26.4
 pandas==2.3.3
 scipy==1.15.3
-networkx==3.4.2
 causal-learn==0.1.4.3
-igraph==1.0.0
 joblib==1.5.2

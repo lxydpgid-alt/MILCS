@@ -28,10 +28,8 @@ Third-party packages used by the codebase and their versions in the current envi
 |---|---|
 | numpy | 1.26.4 |
 | pandas | 2.3.3 |
-| networkx | 3.4.2 |
 | scipy | 1.15.3 |
 | causal-learn | 0.1.4.3 |
-| igraph | 1.0.0 |
 | joblib | 1.5.2 |
 
 Note: standard-library modules such as `os`, `argparse`, `json`, `time`, `re`, `logging`, `typing`, `itertools`, `collections`, `dataclasses`, `enum`, and `warnings` are also used, but they are included with Python and do not require separate installation.

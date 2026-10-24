@@ -59,6 +59,5 @@ not averages across seeds. Runtime and traversal order can vary between runs.
 - `truth_matrix.csv`: pre-intervention truth DAG including latent nodes.
 - `weight_matrix.csv`: linear SEM weights.
 - `data_1.csv` through `data_3.csv`: 5,000 rows and 73 columns per environment.
-- `data_1_matrix01.csv` through `data_3_matrix01.csv`: intervention DAGs.
 - `result_fisher_z.txt`: actual full-run output.
 - `win95pts/`: original DAG and variable mapping.

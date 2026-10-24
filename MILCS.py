@@ -13,10 +13,10 @@ from utils.evaluate import (
     evaluate_local,
 )
 
-# Step 1: Load interventional data or oracle DAG matrices
-def load_data(folder: str, matrix_mode: bool = False):
+# Step 1: Load interventional sample tables
+def load_data(folder: str):
     folder = os.path.expanduser(folder)
-    pattern = re.compile(r"^data_\d+_matrix01\.csv$") if matrix_mode else re.compile(r"^data_\d+\.csv$")
+    pattern = re.compile(r"^data_\d+\.csv$")
     files = sorted(
         f for f in os.listdir(folder)
         if pattern.match(f)
@@ -25,16 +25,14 @@ def load_data(folder: str, matrix_mode: bool = False):
     skipped = []
     for f in files:
         path = os.path.join(folder, f)
-        # Read continuous data as sample tables; read D-sep mode data as adjacency matrices.
+        # Read continuous data as sample tables.
         # Guard against transient empty-file windows when data generator is writing.
         last_err = None
         for k in range(3):
             try:
-                df = pd.read_csv(path, index_col=0) if matrix_mode else pd.read_csv(path)
+                df = pd.read_csv(path)
                 if df.shape[1] == 0:
                     raise pd.errors.EmptyDataError("No columns parsed from CSV.")
-                if matrix_mode and df.shape[0] != df.shape[1]:
-                    raise ValueError(f"Oracle DAG matrix must be square: {path}")
                 dags[f] = df
                 break
             except (pd.errors.EmptyDataError, ValueError) as e:
@@ -64,7 +62,6 @@ def collect_local_pags(
     target_name: str,
     dags: dict,
     env_learners: dict,
-    ci_test_type: str,
     global_sepsets: dict,
 ) -> list:
     local_pags = []
@@ -73,10 +70,7 @@ def collect_local_pags(
             continue
         # Retrieve the PMB_Learner object for this environment from env_learners.
         learner = env_learners[name]
-        if ci_test_type != "D_sep":
-            local_pag = learn_local(learner, target_name)
-        else:
-            local_pag = learner.mb_strcuture_learner(target_name)
+        local_pag = learn_local(learner, target_name)
         local_pags.append(local_pag)
         if name not in global_sepsets:
             # Each round returns a separation set.
@@ -91,7 +85,6 @@ def process_target(
     G: MixGraph,
     dags: dict,
     env_learners: dict,
-    ci_test_type: str,
     global_sepsets: dict,
     orienter,
     pending_removed_edges: set,
@@ -105,7 +98,6 @@ def process_target(
         target_name=target_name,
         dags=dags,
         env_learners=env_learners,
-        ci_test_type=ci_test_type,
         global_sepsets=global_sepsets,
     )
     if not local_pags:
@@ -373,8 +365,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--ci-type",
         default="Fisher_Z",
-        choices=["Fisher_Z", "KCI", "RCIT", "FastKCI", "Poly_Z", "G_sq", "D_sep"],
-        help="CI mode for continuous, discrete, or oracle data.",
+        choices=["Fisher_Z", "KCI", "RCIT", "FastKCI", "Poly_Z", "G_sq"],
+        help="CI mode for continuous or discrete data.",
     )
     parser.add_argument(
         "--max-processed-nodes",
@@ -415,10 +407,7 @@ if __name__ == "__main__":
     DoneList = set()
     WaitList = [TARGET_NODE]
     # ---- Load data from each environment ----
-    dags = load_data(
-        folder=args.intervention_dir,
-        matrix_mode=(CI_TEST_TYPE == "D_sep"),
-    )
+    dags = load_data(folder=args.intervention_dir)
     observed_node_names = set()
     for dag_df in dags.values():
         observed_node_names.update(
@@ -442,9 +431,6 @@ if __name__ == "__main__":
             alpha=args.alpha,
             max_K=3,
         )
-        # In Oracle D-sep mode, pass the latent-variable list to the learner.
-        if CI_TEST_TYPE == "D_sep":
-            learner_kwargs["latent_nodes"] = [v for v in LATENT_VARS if v in dag_df.columns]
         # Create a PMB_Learner for this environment and store it in env_learners.
         env_learners[name] = PMB_Learner(**learner_kwargs)
     first_learner = next(iter(env_learners.values()))
@@ -484,7 +470,6 @@ if __name__ == "__main__":
             G=G,
             dags=dags,
             env_learners=env_learners,
-            ci_test_type=CI_TEST_TYPE,
             global_sepsets=global_sepsets,
             orienter=orienter,
             pending_removed_edges=pending_removed_edges,

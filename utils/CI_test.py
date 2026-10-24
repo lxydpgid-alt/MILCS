@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import networkx as nx
 import time
 from scipy.stats import norm
 from typing import Union, List, Optional, Dict, Tuple
@@ -44,8 +43,7 @@ class CausalLearnCITest:
 
     DISCRETE_METHODS = {"gsq", "chisq"}
     CONTINUOUS_METHODS = {"fisherz", "mv_fisherz", "kci", "rcit", "fastkci", "polyz"}
-    ORACLE_METHODS = {"d_sep"}
-    SUPPORTED_METHODS = DISCRETE_METHODS | CONTINUOUS_METHODS | ORACLE_METHODS
+    SUPPORTED_METHODS = DISCRETE_METHODS | CONTINUOUS_METHODS
 
     def __init__(
         self,
@@ -94,13 +92,7 @@ class CausalLearnCITest:
             poly /= scale
             self._poly_corr = np.corrcoef(poly, rowvar=False)
             self._poly_p = self.data.shape[1]
-        if self.method in self.ORACLE_METHODS:
-            self.G = nx.from_numpy_array(self.data, create_using=nx.DiGraph)
-            if nx.__version__ > "3.4.2":
-                self.cit_obj = lambda X, Y, S: 1 if nx.is_d_separator(self.G, X, Y, set(S)) else 0
-            else:
-                self.cit_obj = lambda X, Y, S: 1 if nx.d_separated(self.G, {X}, {Y}, set(S)) else 0
-        elif self.method == "polyz":
+        if self.method == "polyz":
             self.cit_obj = None
         else:
             if self.method == "fastkci":
@@ -108,21 +100,6 @@ class CausalLearnCITest:
             self.cit_obj = CIT(self.data, self.method, **kwargs)
 
     def _prepare_data(self, df: pd.DataFrame) -> np.ndarray:
-        if self.method in self.ORACLE_METHODS:
-            if df.shape[0] != df.shape[1]:
-                raise ValueError(f"Method '{self.method}' requires a square adjacency matrix.")
-            if list(df.index.map(str)) != list(df.columns.map(str)):
-                raise ValueError(f"Method '{self.method}' requires identical row/column labels.")
-            try:
-                data = df.to_numpy(dtype=int, copy=True)
-            except ValueError as exc:
-                raise TypeError(
-                    f"Method '{self.method}' requires a numeric adjacency matrix."
-                ) from exc
-            if not np.isin(data, [0, 1]).all():
-                raise ValueError(f"Method '{self.method}' requires a 0/1 adjacency matrix.")
-            return data
-
         if self.method in self.DISCRETE_METHODS:
             if df.isna().any().any():
                 raise ValueError(f"Method '{self.method}' does not allow missing values.")

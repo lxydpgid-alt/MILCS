@@ -2,13 +2,12 @@ import logging
 from typing import Dict, List, Optional, Tuple
 from itertools import combinations
 
-import networkx as nx
 import pandas as pd
 
 from Graph.mixgraph import MixGraph, Mark, Node
 from Graph.sepset import Separation_Set
 from .CI_test import CausalLearnCITest
-from .mb import FastIAMB_learn, discrete_MB_learn, gaussian_MB_learn, TC_learn
+from .mb import FastIAMB_learn, discrete_MB_learn, gaussian_MB_learn
 
 
 """
@@ -22,25 +21,9 @@ class PMB_Learner:
 
     def __init__(self, data, alpha = 0.05, ci_type = "Fisher_Z", **kwargs):
 
-        ### For the orcale case, ci_type should be "D_sep"
         self.ci_type = ci_type
-        self.latent_nodes = kwargs.get("latent_nodes", None)  # List of latent nodes, default is None
-        if self.latent_nodes is not None and ci_type != "D_sep":
-            raise ValueError("Latent nodes or selection bias nodes are only supported with D_sep CI type.")
 
-        if ci_type=="D_sep":
-            self.G = nx.from_pandas_adjacency(data, create_using=nx.DiGraph)
-            self.ancList = {}
-            self.vars_list = data.columns.tolist()
-            for var in self.vars_list:
-                self.ancList[var]=set(nx.ancestors(self.G, var))
-
-
-        if ci_type == "D_sep" and self.latent_nodes is not None:
-            observed_data = data.drop(index=self.latent_nodes, columns=self.latent_nodes, errors="ignore")
-        else:
-            observed_data = data
-        ##End for the orcale case
+        observed_data = data
 
         if ci_type == "Fisher_Z":
             # New Fisher-Z implementation lives in CI_test.py and accepts only DataFrame.
@@ -77,19 +60,7 @@ class PMB_Learner:
                 alpha=alpha,
                 use_cache=kwargs.get("use_cache", True),
             )
-        elif ci_type == "D_sep":
-            self.ci_test = CausalLearnCITest(
-                data,
-                method="d_sep",
-                alpha=alpha,
-                use_cache=kwargs.get("use_cache", True),
-            )
-        if ci_type == "D_sep":
-            self.mb_learner = TC_learn(
-                dag=data,
-                latent_vars=self.latent_nodes or [],
-            )
-        elif ci_type == "Fisher_Z":
+        if ci_type == "Fisher_Z":
             self.mb_learner = gaussian_MB_learn(
                 data=observed_data,
                 alpha=alpha,
@@ -235,67 +206,6 @@ class PMB_Learner:
         sub_nodes = sorted(self.get_mb(target_node) | {target_node}, key=lambda n: n.index)
         sub_graph, _ = self.learn_skeleton_base_data(sub_nodes)
         return sub_graph
-
-
-    def oracle_leaf_node_learning_small2large(self, sub_nodes: list[Node]) -> MixGraph:
-        """
-        Oracle skeleton learning using true DAG (D-separation),
-        but search sepsets from small to large and keep the first (minimum-size) one.
-        """
-        sub_graph = MixGraph(incoming_graph_data=sub_nodes)
-        sub_graph._init_complete_graph()
-        sub_vars = {node.name for node in sub_nodes}
-
-        for x_node, y_node in list(sub_graph.edges()):
-            sepset_candidates = (
-                self.ancList[x_node.name]
-                | self.ancList[y_node.name]
-            ) - {x_node.name, y_node.name}
-            pool_names = sorted(sepset_candidates & sub_vars)
-
-            max_sep_size = min(self.max_K, len(pool_names))
-            found = False
-            for sep_size in range(max_sep_size + 1):
-                for sepset_names in combinations(pool_names, sep_size):
-                    is_indep, *_ = self.ci_test(
-                        x_node.name,
-                        y_node.name,
-                        list(sepset_names)
-                    )
-                    if not is_indep:
-                        continue
-
-                    self.sepsets._add(
-                        x_node,
-                        y_node,
-                        {self.Nodes_dict[n] for n in sepset_names}
-                    )
-                    sub_graph.remove_Edge(x_node, y_node)
-                    found = True
-                    break
-                if found:
-                    break
-
-        return sub_graph
-
-
-    def mb_strcuture_learner(self, target: str) -> MixGraph:
-
-        self.orientation_records = {}
-        self._record_step = 0
-        target_node = self.Nodes_dict[target]
-        # Initialize the local separation sets.
-        mb_nodes = self.get_mb(target_node)
-        mbplus_node_list = list(mb_nodes | {target_node})
-
-        self.sepsets = Separation_Set(set(mbplus_node_list))
-
-        #  2. skeleton + orientation
-        skeleton = self.oracle_leaf_node_learning_small2large(mbplus_node_list)
-        part_directed_graph = self.orient_collider(skeleton)
-        sub_pag = self.orient_rules(part_directed_graph)
-
-        return sub_pag
 
 
     def orient_collider(self, undirected_graph: MixGraph) -> MixGraph:
