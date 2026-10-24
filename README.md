@@ -4,13 +4,11 @@ MILCS (Multi-Intervention Local Causal Structure Learning) is a Python toolkit f
 
 ## 😀 Main Components
 
-- `load_data`: loads sample tables for each environment in `MILCS.py`.
 - `learn_local` / `collect_local_pags`: learn local PAGs and accumulate separation sets in `MILCS.py`.
 - `merge_pags` / `prune_edges`: merge target edges and remove induced edges in `MILCS.py`.
 - `PMB_Learner`: learns local skeletons and applies local R1-R3 in `utils/PMB_learn.py`.
 - `G_orient`: applies global R1 using support from any one environment in `Graph/G_orient.py`.
 - `CausalLearnCITest`: runs conditional independence tests with query caching in `utils/CI_test.py`.
-- `build_eval_matrices` / `evaluate_local`: evaluate adjacency and endpoint marks around the original target in `utils/evaluate.py`.
 
 ## 🗒️ Typical Workflow
 
