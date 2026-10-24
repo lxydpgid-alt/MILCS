@@ -1,0 +1,8 @@
+{
+  "seed": 20261024,
+  "samples_per_environment": 5000,
+  "latent_count": 3,
+  "environment_count": 3,
+  "intervention_size": 3,
+  "target": "V63"
+}

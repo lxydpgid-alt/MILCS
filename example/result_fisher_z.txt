@@ -1,0 +1,49 @@
+ Loaded 3 interventional DAGs
+Iteration guard: total_nodes=76, max_processed_nodes=15
+MB learner: gaussian_MB_learn, data_type=n/a, max_k=n/a, CI=Fisher_Z
+===== Start =====
+Target node: V63
+alpha: 0.01
+WaitList policy: all_local
+ Building the initial global causal structure G0
+------------------------------------
+ Processing node V31
+------------------------------------
+ Processing node V32
+------------------------------------
+ Processing node V34
+------------------------------------
+ Processing node V35
+------------------------------------
+ Processing node V36
+------------------------------------
+ Processing node V51
+ Stop: target V63 has no unresolved circle endpoints
+TRAVERSAL_STATS {"coverage": 0.0958904109589041, "exit_reason": "target V63 has no unresolved circle endpoints", "processed_observed": 7, "total_observed": 73, "traversed_all": false, "unprocessed_nodes": ["V0", "V1", "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18", "V19", "V2", "V20", "V21", "V22", "V24", "V25", "V26", "V27", "V28", "V30", "V33", "V37", "V38", "V39", "V4", "V40", "V41", "V42", "V43", "V44", "V45", "V46", "V47", "V48", "V49", "V5", "V50", "V52", "V53", "V54", "V55", "V56", "V57", "V58", "V59", "V6", "V60", "V61", "V62", "V64", "V65", "V66", "V67", "V68", "V69", "V7", "V70", "V71", "V72", "V73", "V74", "V75", "V8", "V9"], "waitlist_policy": "all_local"}
+
+ Final learned G (PAG edges):
+V31o-> V49
+V31o-> V50
+V32o-> V50
+V34--> V63
+V34--> V54
+V34--> V52
+V34--> V53
+V34o-> V51
+V0o-> V34
+V1o-> V34
+V35<-> V63
+V35<-> V57
+V35o-o V36
+V35--> V56
+V36<-> V63
+V36<-> V57
+V51--> V63
+V8o-> V51
+V2o-> V51
+V63--> V67
+
+ Local target metrics (evaluate_local style):
+ Adjacency Precision, Recall, F1: 1.0000, 1.0000, 1.0000
+Mark Precision, Recall, F1: 1.0000, 1.0000, 1.0000
+  - CI tests/Runtime: 2165, 0.435s
