@@ -12,7 +12,7 @@ MILCS (Multi-Intervention Local Causal Structure Learning) is a Python toolkit f
 
 ## 🗒️ Typical Workflow
 
-A typical workflow is to load sample tables for each environment along with configuration (latent variables and intervention targets), learn a local PAG for the current target in each environment, merge local target edges, prune induced edges, apply global R1, expand the processing queue until no new variables remain, and finally evaluate only edges incident to the original target. Conflicting definite endpoint marks become circles during merging; global orientation can subsequently refine circles when its rule conditions are met.
+A typical workflow loads the sample tables for each environment together with the associated configuration metadata. Starting from the target variable, MILCS iteratively processes relevant variables. For each anchor variable, it learns a local PAG from each environment using Markov blanket discovery and conditional independence (CI) tests, then extracts the local edges and V-structures relevant to that anchor. The resulting local structures are integrated into a global graph by merging adjacencies and endpoint marks and removing spurious adjacencies identified through cross-environment information. The algorithm then applies the global orientation rule (Rule 1) using the recorded separating sets. Newly discovered variables in the Markov blankets are added to the processing queue, and the recursive search continues until the local structure around the target is determined or the queue becomes empty.Finally, evaluation is restricted to edges incident to the original target variable.
 
 ## 🛠️ Environment
 
@@ -53,7 +53,6 @@ $$
 
 At the mark level, an incorrect endpoint contributes one FP and one FN. If both predicted and true target neighborhoods are empty, all metrics are 1; if only one is empty, all metrics are 0. Other zero denominators yield 0.
 
-The truth conversion represents direct causal edges and directly shared latent parents. If direct causation and latent confounding coexist, the current scoring convention accepts either a circle or a tail at the causal source endpoint. This conversion does not implement a general latent projection for arbitrary hidden paths.
 
 ## 🤝 Contributing & Contact
 
