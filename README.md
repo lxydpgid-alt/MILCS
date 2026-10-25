@@ -12,7 +12,7 @@ MILCS (Multi-Intervention Local Causal Structure Learning) is a Python toolkit f
 
 ## 🗒️ Typical Workflow
 
-A typical workflow loads the sample tables for each environment together with the associated configuration metadata. Starting from the target variable, MILCS iteratively processes relevant variables. For each anchor variable, it learns a local PAG from each environment using Markov blanket discovery and conditional independence (CI) tests, then extracts the local edges and V-structures relevant to that anchor. The resulting local structures are integrated into a global graph by merging adjacencies and endpoint marks and removing spurious adjacencies identified through cross-environment information. The algorithm then applies the global orientation rule (Rule 1) using the recorded separating sets. Newly discovered variables in the Markov blankets are added to the processing queue, and the recursive search continues until the local structure around the target is determined or the queue becomes empty.Finally, evaluation is restricted to edges incident to the original target variable.
+A typical workflow loads the interventional datasets and configuration metadata, runs MILCS to learn local causal structures around a target variable, integrates the learned structures across environments, and evaluates the resulting local graph.
 
 ## 🛠️ Environment
 
