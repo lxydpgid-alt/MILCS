@@ -1,6 +1,6 @@
 # MILCS
 
-MILCS (Multi-Intervention Local Causal Structure Learning) is a Python toolkit for learning the causal structure around a target variable from multiple interventional environments in the presence of latent variables. It provides local PAG learning, multi-environment graph merging, induced-edge pruning, global orientation, continuous data simulation, and target-specific evaluation. A complete end-to-end example is available in `example.ipynb`.
+MILCS (Multi-Intervention Local Causal Structure Learning) is a Python toolkit for learning the causal structure around a target variable from multiple interventional environments in the presence of latent variables. It provides local PAG learning, multi-environment graph merging, induced-edge pruning, global orientation, and target-specific evaluation. A complete end-to-end example is available in `example.ipynb`.
 
 ## 😀 Main Components
 
@@ -12,7 +12,7 @@ MILCS (Multi-Intervention Local Causal Structure Learning) is a Python toolkit f
 
 ## 🗒️ Typical Workflow
 
-A typical workflow is to load a DAG and define latent variables and intervention environments (or load existing sample tables), learn a local PAG for the current target in each environment, merge local target edges, prune induced edges, apply global R1, expand the processing queue until a stopping condition is reached, and finally evaluate only edges incident to the original target. Conflicting definite endpoint marks become circles during merging; global orientation can subsequently refine circles when its rule conditions are met.
+A typical workflow is to load sample tables for each environment along with configuration (latent variables and intervention targets), learn a local PAG for the current target in each environment, merge local target edges, prune induced edges, apply global R1, expand the processing queue until no new variables remain, and finally evaluate only edges incident to the original target. Conflicting definite endpoint marks become circles during merging; global orientation can subsequently refine circles when its rule conditions are met.
 
 ## 🛠️ Environment
 
