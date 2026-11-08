@@ -186,66 +186,48 @@ def merge_pags(local_pags, target_name, G=None):
     return G
 # Collect induced edges first, then delete them in one batch.
 def prune_edges(G: MixGraph, local_pags: list, pending_removed_edges: set):
-    # Clear the pending deletion set first so it only records edges newly found in this round.
     pending_removed_edges.clear()
 
-    # Only iterate over edges that currently exist in G; no need to enumerate all node pairs.
+    # Only consider edges currently present in the merged graph.
     for XG, YG in list(G.edges()):
         key = tuple(sorted((XG.name, YG.name)))
-
-        # Skip edges that have already been permanently removed.
         if key in removed_edges:
             continue
 
-        X_name, Y_name = XG.name, YG.name
-
-        # Search each local PAG for evidence that this edge should be removed.
         for local_pag in local_pags:
-            # Build a name-to-node mapping for lookup convenience.
-            name_to_node = {n.name: n for n in local_pag.node_list}
+            nodes = {node.name: node for node in local_pag.node_list}
 
-            # If this local PAG does not even contain X or Y, it cannot provide evidence.
-            if X_name not in name_to_node or Y_name not in name_to_node:
+            # Both nodes must be within this local learning scope.
+            if XG.name not in nodes or YG.name not in nodes:
                 continue
-            if has_arrowhead(X) and has_arrowhead(Y):
-                pending_removed_edges.add(key)
-                break
 
-            X = name_to_node[X_name]
-            Y = name_to_node[Y_name]
+            X = nodes[XG.name]
+            Y = nodes[YG.name]
 
-            # Condition 1: X and Y must be non-adjacent in the local PAG.
+            # The full learned local structure must judge them non-adjacent.
             if local_pag.has_edge(X, Y):
                 continue
 
-            # Check whether a node has at least one incoming arrowhead in the local PAG.
-            # Since get_Edge(V, U) is aligned to the V -> U viewpoint, the mark at V is lmark.
-            def has_arrowhead(V):
-                for U in local_pag.get_adj_nodes(V):
-                    if local_pag.get_Edge(V, U).lmark == Mark.ARROW:
+            def has_arrowhead_at(node):
+                for neighbor in local_pag.get_adj_nodes(node):
+                    edge = local_pag.get_Edge(node, neighbor)
+                    if edge.lmark == Mark.ARROW:
                         return True
                 return False
 
-            # Condition 2: both X and Y must have appeared with an arrowhead.
-            if has_arrowhead(X) and has_arrowhead(Y):
+            if has_arrowhead_at(X) and has_arrowhead_at(Y):
                 pending_removed_edges.add(key)
                 break
 
-    # Apply deletions in one batch to avoid modifying G during iteration.
+    # Apply removals after collecting all qualifying edges.
+    graph_nodes = {node.name: node for node in G.node_list}
     for x_name, y_name in pending_removed_edges:
-        XG = next((n for n in G.node_list if n.name == x_name), None)
-        YG = next((n for n in G.node_list if n.name == y_name), None)
-
-        if XG is None or YG is None:
-            continue
-
+        XG = graph_nodes[x_name]
+        YG = graph_nodes[y_name]
         if G.has_edge(XG, YG):
             G.remove_Edge(XG, YG)
-
-        # Record it in the permanent blacklist so merge_pags will not add it back later.
         removed_edges.add((x_name, y_name))
 
-    # The pending deletion set for this round has been fully processed; clear it.
     pending_removed_edges.clear()
     return G
 # Encapsulate the stopping rules for the main loop and return the stop reason when triggered.
