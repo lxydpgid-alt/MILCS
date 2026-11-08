@@ -207,6 +207,9 @@ def prune_edges(G: MixGraph, local_pags: list, pending_removed_edges: set):
             # If this local PAG does not even contain X or Y, it cannot provide evidence.
             if X_name not in name_to_node or Y_name not in name_to_node:
                 continue
+            if has_arrowhead(X) and has_arrowhead(Y):
+                pending_removed_edges.add(key)
+                break
 
             X = name_to_node[X_name]
             Y = name_to_node[Y_name]
